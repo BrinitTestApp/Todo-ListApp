@@ -10,10 +10,11 @@ import UIKit
 class TodoListViewController: UITableViewController {
 
     
-    let listItems = ["pizza","Breads","Milk", "Vegetables","Banana", "Oranges","Suegr","Choclates","Mangoes","Cups","Plates"]
+    var listItems = ["pizza","Breads","Milk"]
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
+      
     }
 
     //MARK:- TableView DataSource Methods
@@ -30,9 +31,7 @@ class TodoListViewController: UITableViewController {
     
     //MARK:- TableView Delegate Methods
     
-    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        print(listItems[indexPath.row])
-        
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {        
         if tableView.cellForRow(at: indexPath)?.accessoryType == .checkmark {
             tableView.cellForRow(at: indexPath)?.accessoryType = .none
         }else {
@@ -42,5 +41,32 @@ class TodoListViewController: UITableViewController {
         
         tableView.deselectRow(at: indexPath, animated: true)
     }
+    
+    //MARK:- Add new Items
+    
+    @IBAction func addButtonTapped(_ sender: UIBarButtonItem) {
+        var addItemTextField = UITextField()
+        
+        let alert = UIAlertController(title: "Add New TodoList Item", message: "", preferredStyle: .alert)
+        let action = UIAlertAction(title: "Add Item", style: .default) { (action) in
+            // What Happen if User Taped On Add on our UIAlert
+            if let textAvailable = addItemTextField.text{
+                if  textAvailable != "" {
+                    self.listItems.append(addItemTextField.text!)
+                }
+            }
+            
+            
+            self.tableView.reloadData()
+        }
+        alert.addTextField { (alertTextField) in
+            alertTextField.placeholder = "Create new item"
+            addItemTextField = alertTextField
+        }
+        alert.addAction(action)
+        present(alert, animated: true)
+        
+    }
+    
 }
 
