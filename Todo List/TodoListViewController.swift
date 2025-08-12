@@ -10,7 +10,7 @@ import UIKit
 class TodoListViewController: UITableViewController {
 
     
-    let listItems = ["pizza","Breads","Milk", "Vegitables","Banana", "Oranges","Suegr","Choclates"]
+    let listItems = ["pizza","Breads","Milk", "Vegetables","Banana", "Oranges","Suegr","Choclates","Mangoes","Cups","Plates"]
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
