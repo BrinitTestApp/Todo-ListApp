@@ -11,9 +11,17 @@ class TodoListViewController: UITableViewController {
 
     
     var listItems = ["pizza","Breads","Milk"]
+    let defaults = UserDefaults.standard
+  
     override func viewDidLoad() {
+        
         super.viewDidLoad()
         // Do any additional setup after loading the view.
+        
+        if let item = defaults.array(forKey: "TodoList item") as? [String]{
+            listItems = item
+        }
+      
       
     }
 
@@ -31,7 +39,7 @@ class TodoListViewController: UITableViewController {
     
     //MARK:- TableView Delegate Methods
     
-    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {        
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         if tableView.cellForRow(at: indexPath)?.accessoryType == .checkmark {
             tableView.cellForRow(at: indexPath)?.accessoryType = .none
         }else {
@@ -53,6 +61,7 @@ class TodoListViewController: UITableViewController {
             if let textAvailable = addItemTextField.text{
                 if  textAvailable != "" {
                     self.listItems.append(addItemTextField.text!)
+                    self.defaults.set(self.listItems, forKey: "TodoList item")
                 }
             }
             
