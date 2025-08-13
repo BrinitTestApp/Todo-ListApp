@@ -10,17 +10,16 @@ import UIKit
 class TodoListViewController: UITableViewController {
 
     
-    var listItems = ["pizza","Breads","Milk"]
+    var listItems = ["pizza","Breads","Milk","A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X"]
     let defaults = UserDefaults.standard
-  
+
     override func viewDidLoad() {
         
         super.viewDidLoad()
-        // Do any additional setup after loading the view.
         
-        if let item = defaults.array(forKey: "TodoList item") as? [String]{
-            listItems = item
-        }
+//        if let item = defaults.array(forKey: "TodoList item") as? [String]{
+//            listItems = item
+//        }
       
       
     }
@@ -32,21 +31,26 @@ class TodoListViewController: UITableViewController {
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "TodoItemCell", for: indexPath)
+        
+        let cell = UITableViewCell(style: .default, reuseIdentifier: "TodoItemCell")
+     //   let cell = tableView.dequeueReusableCell(withIdentifier: "TodoItemCell", for: indexPath)
         cell.textLabel?.text = listItems[indexPath.row]
+       
+      
         return cell
     }
     
     //MARK:- TableView Delegate Methods
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        
         if tableView.cellForRow(at: indexPath)?.accessoryType == .checkmark {
             tableView.cellForRow(at: indexPath)?.accessoryType = .none
         }else {
+                
             tableView.cellForRow(at: indexPath)?.accessoryType = .checkmark
         }
       
-        
         tableView.deselectRow(at: indexPath, animated: true)
     }
     
