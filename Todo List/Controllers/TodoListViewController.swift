@@ -6,38 +6,29 @@
 //
 
 import UIKit
+import CoreData
 
 class TodoListViewController: UITableViewController {
     
-    
+// MARK:- Assigning Variables
     var listItems = [Item]()
-    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
+//MARK:- Assigning Path of Database and Classes
+    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+    
+// File Path Of The Application Files
+    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
         
         
-        print(dataFilePath)
-        let item1 = Item()
-        item1.title = "Milk"
-        listItems.append(item1)
         
-        let item2 = Item()
-        item2.title = "Cake"
-        listItems.append(item2)
+        print("\(String(describing: dataFilePath))")
         
-        let item3 = Item()
-        item3.title = "Bread"
-   
-        listItems.append(item3)
         
         loadItems()
-        
+        //MARK:- TableView DataSource Methods
     }
-    
-    //MARK:- TableView DataSource Methods
-    
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         listItems.count
     }
@@ -61,9 +52,56 @@ class TodoListViewController: UITableViewController {
     //MARK:- TableView Delegate Methods
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        var checkTitle = "Uncheck"
+        var myupdatedTextField = UITextField()
+    //MARk:- Items That updte the DataBase
+        let title = listItems[indexPath.row].title
+        let updateList = UIAlertController(title: "Update List", message: title , preferredStyle: .actionSheet)
         
-        listItems[indexPath.row].done = !listItems[indexPath.row].done
-        saveItems()
+        let doneAction = UIAlertAction(title: "Update Item", style: .default) { action in
+            let updateAlert = UIAlertController(title: "Update Title", message: title, preferredStyle: .alert)
+            let updateAction = UIAlertAction(title: "Update", style: .default) { action in
+                self.listItems[indexPath.row].title = myupdatedTextField.text
+                self.saveItems()
+                self.tableView.reloadData()
+            }
+            updateAlert.addTextField {updateTextField in
+                updateTextField.placeholder = "Enter Text "
+                myupdatedTextField = updateTextField
+            }
+            updateAlert.addAction(updateAction)
+            self.present(updateAlert, animated: true)
+        }
+    //MARk:- Items That Check Uncheck the item in the DataBase
+        (self.listItems[indexPath.row].done) ? (checkTitle = "Uncheck") : (checkTitle = "Check")
+        
+        let checkAction = UIAlertAction(title: checkTitle, style: .default) { action in
+           
+            self.listItems[indexPath.row].done = !self.listItems[indexPath.row].done
+            self.saveItems()
+            self.tableView.reloadData()
+        }
+    //MARk:- Items That Remove the item in the DataBase
+        let removeAction = UIAlertAction(title: "Remove Item", style: .destructive) { _ in
+            let removeAlert = UIAlertController(title: "Remove Item", message: "Are you Want to Remove Data", preferredStyle: .alert)
+            let YesAction = UIAlertAction(title: "Yes", style: .destructive) { _ in
+                self.context.delete(self.listItems[indexPath.row])
+                self.listItems.remove(at: indexPath.row)
+                self.saveItems()
+                self.tableView.reloadData()
+            }
+            let NoAction = UIAlertAction(title: "No", style: .default)
+            removeAlert.addAction(YesAction)
+            removeAlert.addAction(NoAction)
+            self.present(removeAlert, animated: true)
+        }
+        updateList.addAction(doneAction)
+        updateList.addAction(checkAction)
+        updateList.addAction(removeAction)
+      present(updateList, animated: true)
+        
+            
+        
         tableView.deselectRow(at: indexPath, animated: true)
     }
 
@@ -77,15 +115,14 @@ class TodoListViewController: UITableViewController {
                 // What Happen if User Taped On Add on our UIAlert
                 if let textAvailable = addItemTextField.text{
                     if  textAvailable != ""{
-                        let item = Item()
-                        item.title =  addItemTextField.text!
+                       
+                        let item = Item(context:self.context)
+                            item.title =  addItemTextField.text!
+                            item.done = false
                         self.listItems.append(item)
                         saveItems()
                     }
                 }
-                
-                
-               
             }
             alert.addTextField { (alertTextField) in
                 alertTextField.placeholder = "Create new item"
@@ -95,29 +132,26 @@ class TodoListViewController: UITableViewController {
             present(alert, animated: true)
         }
 
-    
+// MARK:- Save Item into DataBase
     func saveItems(){
         
-        let encoder = PropertyListEncoder()
+        
         do {
-            let data = try encoder.encode(listItems)
-            try data.write(to: dataFilePath!)
+            try context.save()
         }catch {
-            print("Error encoding item array . \(error)")
-        }
+            print("Error Saving Context \(error)")}
         self.tableView.reloadData()
     }
-    
+// MARK:- Fetch Item from the DataBase
     func loadItems(){
-        if let data = try? Data(contentsOf: dataFilePath!){
-            let decoder = PropertyListDecoder()
-            do{
-                listItems = try decoder.decode([Item].self, from: data)
-                
-            }catch{
-                print("Error Decode Item \(error)")
-            }
+        let request : NSFetchRequest<Item> = Item.fetchRequest()
+        do{
+           listItems =  try context.fetch(request)
         }
+        catch{
+            print("Error Fetching Request form context \(error)")
+        }
+        
     }
     
     
