@@ -44,10 +44,16 @@ class CategoryTableVC: UITableViewController {
         var categoryTextField = UITextField()
         let categoryAc = UIAlertController(title: "Add Category", message: "", preferredStyle: .alert)
         let categoryAction = UIAlertAction(title: "Add", style: .default) { _ in
-            let item = Category(context: self.context)
-            item.name = categoryTextField.text
-            self.categoryName.append(item)
-            self.saveData()
+            
+            if categoryTextField.text != nil && categoryTextField.text != ""{
+                let item = Category(context: self.context)
+                item.name = categoryTextField.text
+                self.categoryName.append(item)
+                self.saveData()
+            }else{
+                return
+            }
+           
             
         }
         categoryAc.addTextField { textField in

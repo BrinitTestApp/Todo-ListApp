@@ -56,13 +56,16 @@ class TodoListViewController: UITableViewController {
         var myupdatedTextField = UITextField()
     //MARk:- Items That updte the DataBase
         let title = listItems[indexPath.row].title
-        let updateList = UIAlertController(title: "Update List", message: title , preferredStyle: .actionSheet)
+        let updateList = UIAlertController(title: "Update List Items", message: title , preferredStyle: .actionSheet)
         
         let doneAction = UIAlertAction(title: "Update Item", style: .default) { action in
             let updateAlert = UIAlertController(title: "Update Title", message: title, preferredStyle: .alert)
             let updateAction = UIAlertAction(title: "Update", style: .default) { action in
-                self.listItems[indexPath.row].title = myupdatedTextField.text
-                self.saveItems()
+                if myupdatedTextField.text != nil && myupdatedTextField.text != "" {
+                    self.listItems[indexPath.row].title = myupdatedTextField.text
+                    self.saveItems()
+                }
+               
                 self.tableView.reloadData()
             }
             updateAlert.addTextField {updateTextField in
