@@ -34,9 +34,36 @@ class CategoryTableVC: UITableViewController {
     
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        performSegue(withIdentifier: "ListtoItem", sender: self)
+        
+        let alert = UIAlertController(title: "Go to Lists", message: "", preferredStyle: .alert)
+        let ListAction = UIAlertAction(title: "List", style: .default) { _ in
+            self.performSegue(withIdentifier: "ListtoItem", sender: self)
+        }
+        let deleteAction = UIAlertAction(title: "Delete", style: .destructive) { _ in
+            let deleteAlert = UIAlertController(title: "Delete Recored", message: "Are you Want to Delete Record", preferredStyle: .alert)
+            let deleteYes = UIAlertAction(title: "Yes", style: .destructive) { _ in
+                self.context.delete(self.categoryName[indexPath.row])
+                self.categoryName.remove(at: indexPath.row)
+                self.saveData()
+                self.tableView.reloadData()
+            }
+            let deleteNo = UIAlertAction(title: "No", style: .default)
+            deleteAlert.addAction(deleteNo)
+            deleteAlert.addAction(deleteYes)
+            self.present(deleteAlert, animated: true)
+        }
+        alert.addAction(ListAction)
+        alert.addAction(deleteAction)
+        present(alert, animated: true)
+     
     }
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        let destinationVC = segue.destination as! TodoListViewController
     
+        if let indexpath = tableView.indexPathForSelectedRow {
+            destinationVC.selectedCatagory = categoryName[indexpath.row] 
+        }
+    }
     
     
     

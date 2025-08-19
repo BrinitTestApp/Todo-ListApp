@@ -12,6 +12,12 @@ class TodoListViewController: UITableViewController {
     
 // MARK:- Assigning Variables
     var listItems = [Item]()
+    var selectedCatagory: Category?{
+        didSet{
+            loadItems()
+        }
+    }
+    
 //MARK:- Assigning Path of Database and Classes
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
@@ -26,7 +32,7 @@ class TodoListViewController: UITableViewController {
         print("\(String(describing: dataFilePath))")
         
         
-        loadItems()
+      
         //MARK:- TableView DataSource Methods
     }
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -59,7 +65,7 @@ class TodoListViewController: UITableViewController {
         let updateList = UIAlertController(title: "Update List Items", message: title , preferredStyle: .actionSheet)
         
         let doneAction = UIAlertAction(title: "Update Item", style: .default) { action in
-            let updateAlert = UIAlertController(title: "Update Title", message: title, preferredStyle: .alert)
+            let updateAlert = UIAlertController(title: "Update Item", message: title, preferredStyle: .alert)
             let updateAction = UIAlertAction(title: "Update", style: .default) { action in
                 if myupdatedTextField.text != nil && myupdatedTextField.text != "" {
                     self.listItems[indexPath.row].title = myupdatedTextField.text
@@ -122,6 +128,7 @@ class TodoListViewController: UITableViewController {
                         let item = Item(context:self.context)
                             item.title =  addItemTextField.text!
                             item.done = false
+                        item.parentCetegory = selectedCatagory
                         self.listItems.append(item)
                         saveItems()
                     }
@@ -146,7 +153,15 @@ class TodoListViewController: UITableViewController {
         self.tableView.reloadData()
     }
 // MARK:- Fetch Item from the DataBase
-    func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest()){
+    func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest(),predicate: NSPredicate? = nil){
+        
+        let Catagorypredicate = NSPredicate(format: "parentCetegory.name MATCHES %@", selectedCatagory!.name!)
+        if let additionalPradicate = predicate{
+            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [Catagorypredicate,additionalPradicate])
+        }else{
+            request.predicate = Catagorypredicate
+        }
+  
         do{
            listItems =  try context.fetch(request)
         }
@@ -164,11 +179,11 @@ extension TodoListViewController: UISearchBarDelegate{
         // Find Items using SearchBar
         let request: NSFetchRequest<Item> = Item.fetchRequest()
         
-        request.predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+        let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
         
         request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
         
-        loadItems(with: request)
+        loadItems(with: request, predicate: predicate)
         
     }
         // Back to the ItemList after search Over
