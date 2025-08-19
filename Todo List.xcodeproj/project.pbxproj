@@ -21,6 +21,11 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		23AADC262E54DF4B0039786F /* App Images */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "App Images";
+			sourceTree = "<group>";
+		};
 		23B902612E4ADB1500F13408 /* Todo List */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -46,6 +51,7 @@
 			isa = PBXGroup;
 			children = (
 				23B902612E4ADB1500F13408 /* Todo List */,
+				23AADC262E54DF4B0039786F /* App Images */,
 				23B902602E4ADB1500F13408 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -74,6 +80,7 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
+				23AADC262E54DF4B0039786F /* App Images */,
 				23B902612E4ADB1500F13408 /* Todo List */,
 			);
 			name = "Todo List";
