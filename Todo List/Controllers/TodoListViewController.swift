@@ -6,19 +6,20 @@
 //
 
 import UIKit
-import CoreData
+import RealmSwift
 
 class TodoListViewController: UITableViewController {
     
-// MARK:- Assigning Variables
-    var listItems = [Item]()
+// MARK: - Assigning Variables
+    let realm = try! Realm()
+    var listItems: Results<Item>?
     var selectedCatagory: Category?{
         didSet{
             loadItems()
         }
     }
     
-//MARK:- Assigning Path of Database and Classes
+//MARK: - Assigning Path of Database and Classes
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
 // File Path Of The Application Files
@@ -33,10 +34,10 @@ class TodoListViewController: UITableViewController {
         
         
       
-        //MARK:- TableView DataSource Methods
+        //MARK:  - TableView DataSource Methods
     }
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        listItems.count
+        return listItems?.count ?? 1
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -44,32 +45,47 @@ class TodoListViewController: UITableViewController {
 //        let cell = UITableViewCell(style: .default, reuseIdentifier: "TodoItemCell")
         let cell = tableView.dequeueReusableCell(withIdentifier: "TodoItemCell", for: indexPath)
         
-        let item = listItems[indexPath.row]
-        cell.textLabel?.text = item.title
-      
-//        (!item.done) ? (cell.accessoryType = .none) : (cell.accessoryType = .checkmark)
-        
-        cell.accessoryType = item.done ? .checkmark : .none
+        if let item = listItems?[indexPath.row]{
+            cell.textLabel?.text = item.title
+          
+    //        (!item.done) ? (cell.accessoryType = .none) : (cell.accessoryType = .checkmark)
+            
+            cell.accessoryType = item.done ? .checkmark : .none
+        }else{
+            cell.textLabel?.text  = "No Items Added"
+        }
+       
         
        
         return cell
     }
     
-    //MARK:- TableView Delegate Methods
-    
+    //MARK: - TableView Delegate Methods
+
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         var checkTitle = "Uncheck"
         var myupdatedTextField = UITextField()
-    //MARk:- Items That updte the DataBase
-        let title = listItems[indexPath.row].title
+        guard let myitem = listItems?[indexPath.row]else {return}
+        
+        
+    //MARK: - Items That updte the DataBase
+        let title = listItems?[indexPath.row].title
         let updateList = UIAlertController(title: "Update List Items", message: title , preferredStyle: .actionSheet)
         
         let doneAction = UIAlertAction(title: "Update Item", style: .default) { action in
             let updateAlert = UIAlertController(title: "Update Item", message: title, preferredStyle: .alert)
             let updateAction = UIAlertAction(title: "Update", style: .default) { action in
                 if myupdatedTextField.text != nil && myupdatedTextField.text != "" {
-                    self.listItems[indexPath.row].title = myupdatedTextField.text
-                    self.saveItems()
+                    do{
+                        try self.realm.write{
+                            myitem.title = myupdatedTextField.text!
+                            
+                        }
+                    }catch{
+                        print("Error updating Title \(error)")
+                    }
+                    self.tableView.reloadData()
+                    
                 }
                
                 self.tableView.reloadData()
@@ -81,22 +97,34 @@ class TodoListViewController: UITableViewController {
             updateAlert.addAction(updateAction)
             self.present(updateAlert, animated: true)
         }
-    //MARk:- Items That Check Uncheck the item in the DataBase
-        (self.listItems[indexPath.row].done) ? (checkTitle = "Uncheck") : (checkTitle = "Check")
+    //MARK: - Items That Check Uncheck the item in the DataBase
+        (myitem.done) ? (checkTitle = "Uncheck") : (checkTitle = "Check")
         
         let checkAction = UIAlertAction(title: checkTitle, style: .default) { action in
+            do{
+                try self.realm.write{
+                    myitem.done = !myitem.done
+            }
+            
+            }catch{
+                print("Error Updating Data \(error)")
+            }
            
-            self.listItems[indexPath.row].done = !self.listItems[indexPath.row].done
-            self.saveItems()
+          
             self.tableView.reloadData()
         }
-    //MARk:- Items That Remove the item in the DataBase
+    //MARK: - Items That Remove the item in the DataBase
         let removeAction = UIAlertAction(title: "Remove Item", style: .destructive) { _ in
             let removeAlert = UIAlertController(title: "Remove Item", message: "Are you Want to Remove Data", preferredStyle: .alert)
             let YesAction = UIAlertAction(title: "Yes", style: .destructive) { _ in
-                self.context.delete(self.listItems[indexPath.row])
-                self.listItems.remove(at: indexPath.row)
-                self.saveItems()
+                do{
+                    try self.realm.write{
+                        self.realm.delete(myitem)
+                    }
+                }catch{
+                        print("Error Deleting Data\(error)")
+                    }
+
                 self.tableView.reloadData()
             }
             let NoAction = UIAlertAction(title: "No", style: .default)
@@ -114,23 +142,31 @@ class TodoListViewController: UITableViewController {
         tableView.deselectRow(at: indexPath, animated: true)
     }
 
-        //MARK:- Add new Items
+        //MARK: - Add new Items
         
         @IBAction func addButtonTapped(_ sender: UIBarButtonItem) {
             var addItemTextField = UITextField()
             
             let alert = UIAlertController(title: "Add New TodoList Item", message: "", preferredStyle: .alert)
-            let action = UIAlertAction(title: "Add Item", style: .default) { [self] (action) in
+            let action = UIAlertAction(title: "Add Item", style: .default) { _ in
                 // What Happen if User Taped On Add on our UIAlert
                 if let textAvailable = addItemTextField.text{
                     if  textAvailable != ""{
-                       
-                        let item = Item(context:self.context)
-                            item.title =  addItemTextField.text!
-                            item.done = false
-                        item.parentCetegory = selectedCatagory
-                        self.listItems.append(item)
-                        saveItems()
+                        if let currentCategory = self.selectedCatagory{
+                            do{
+                                try self.realm.write{
+                                    let item = Item()
+                                    item.title =  addItemTextField.text!
+                                    item.done = false
+                                    item.dateCreated = Date()
+                                    currentCategory.items.append(item)
+                                }
+                            }catch{
+                                print("Error Saving Data \(error)")
+                            }
+                        }
+                        
+                        self.tableView.reloadData()
                     }
                 }
             }
@@ -142,49 +178,57 @@ class TodoListViewController: UITableViewController {
             present(alert, animated: true)
         }
 
-// MARK:- Save Item into DataBase
-    func saveItems(){
+// MARK: - Save Item into DataBase
+    func save(listItem: Item){
         
         
         do {
-            try context.save()
+            try realm.write{
+                realm.add(listItem)
+            }
         }catch {
             print("Error Saving Context \(error)")}
         self.tableView.reloadData()
     }
-// MARK:- Fetch Item from the DataBase
-    func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest(),predicate: NSPredicate? = nil){
+// MARK: - Fetch Item from the DataBase
+    func loadItems(){
         
-        let Catagorypredicate = NSPredicate(format: "parentCetegory.name MATCHES %@", selectedCatagory!.name!)
-        if let additionalPradicate = predicate{
-            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [Catagorypredicate,additionalPradicate])
-        }else{
-            request.predicate = Catagorypredicate
-        }
-  
-        do{
-           listItems =  try context.fetch(request)
-        }
-        catch{
-            print("Error Fetching Request form context \(error)")
-        }
+        
+        listItems = selectedCatagory?.items.sorted(byKeyPath: "title", ascending: true)
+//        let Catagorypredicate = NSPredicate(format: "parentCetegory.name MATCHES %@", selectedCatagory!.name!)
+//        if let additionalPradicate = predicate{
+//            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [Catagorypredicate,additionalPradicate])
+//        }else{
+//            request.predicate = Catagorypredicate
+//        }
+//  
+//        do{
+//           listItems =  try context.fetch(request)
+//        }
+//        catch{
+//            print("Error Fetching Request form context \(error)")
+//        }
         tableView.reloadData()
     }
     
     
 }
-//MARK:- Search Configrations
+//MARK: - Search Configrations
+
 extension TodoListViewController: UISearchBarDelegate{
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         // Find Items using SearchBar
-        let request: NSFetchRequest<Item> = Item.fetchRequest()
         
-        let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
-        
-        request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
-        
-        loadItems(with: request, predicate: predicate)
-        
+        listItems = listItems?.filter("title CONTAINS[cd] %@", searchBar.text!).sorted(byKeyPath: "dateCreated", ascending: false)
+//        let request: NSFetchRequest<Item> = Item.fetchRequest()
+//        
+//        let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+//        
+//        request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
+//        
+//        loadItems(with: request, predicate: predicate)
+//
+        tableView.reloadData()
     }
         // Back to the ItemList after search Over
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {

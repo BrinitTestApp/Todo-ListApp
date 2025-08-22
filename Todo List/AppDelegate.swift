@@ -7,12 +7,16 @@
 
 import UIKit
 import CoreData
+import RealmSwift
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+    //MARK: - Location for Database to fetch local Realm Data
+       // print(Realm.Configuration.defaultConfiguration.fileURL)
 
+        
    
         return true
     }
