@@ -7,8 +7,11 @@
 
 import UIKit
 import RealmSwift
+import SwipeCellKit
 
-class CategoryTableVC: UITableViewController {
+class CategoryTableVC: UITableViewController{
+   
+    
 //MARK:- Adding Variable
     let realm = try! Realm()
     
@@ -18,6 +21,8 @@ class CategoryTableVC: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         loadData()
+        tableView.rowHeight = 60.0
+        
       
     }
 
@@ -28,44 +33,19 @@ class CategoryTableVC: UITableViewController {
         return categoryName?.count ?? 1
     }
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "CetagoryCell", for: indexPath)
+        let cell = tableView.dequeueReusableCell(withIdentifier: "CetagoryCell", for: indexPath) as! SwipeTableViewCell
+        cell.textLabel?.font = UIFont.systemFont(ofSize: 15, weight: .semibold)
         cell.textLabel?.text = categoryName?[indexPath.row].name ?? "No Data Found"
+        cell.delegate = self
         return cell
         }
     
     
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath){
-        guard let myItem = categoryName?[indexPath.row] else {return}
-    
-        let alert = UIAlertController(title: "Go to Lists", message: "", preferredStyle: .alert)
-        let ListAction = UIAlertAction(title: "List", style: .default) { _ in
+      
             self.performSegue(withIdentifier: "ListtoItem", sender: self)
-        }
-        let deleteAction = UIAlertAction(title: "Delete", style: .destructive) { _ in
-            let deleteAlert = UIAlertController(title: "Delete Recored", message: "Are you Want to Delete Record", preferredStyle: .alert)
-            let deleteYes = UIAlertAction(title: "Yes", style: .destructive) { _ in
-                do{
-                    try self.realm.write{
-                        self.realm.delete(myItem.items)
-                        self.realm.delete(myItem)
-                    }
-                }catch{
-                    print("Error Deleting Data\(error)")
-                }
-               
-                
-                self.tableView.reloadData()
-                
-            }
-            let deleteNo = UIAlertAction(title: "No", style: .default)
-            deleteAlert.addAction(deleteNo)
-            deleteAlert.addAction(deleteYes)
-            self.present(deleteAlert, animated: true)
-        }
-        alert.addAction(ListAction)
-        alert.addAction(deleteAction)
-        present(alert, animated: true)
+
      
     }
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
@@ -126,7 +106,7 @@ class CategoryTableVC: UITableViewController {
         tableView.reloadData()
     }
         
-       
+    
             
         
     func loadData(){
@@ -134,5 +114,51 @@ class CategoryTableVC: UITableViewController {
         categoryName = realm.objects(Category.self)
 
         tableView.reloadData()
+    }
+    
+    
+    override func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+            CellAnimation.animate(cell,withDuration: 1)
+        }
+
+}
+//MARK: - Swipe TableView Configrations
+extension CategoryTableVC: SwipeTableViewCellDelegate{
+    func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath, for orientation: SwipeCellKit.SwipeActionsOrientation) -> [SwipeCellKit.SwipeAction]? {
+        
+        guard  orientation == .right else {return nil}
+        
+        let deleteAction = SwipeAction(style: .destructive, title: "Delete") { action, indexPath in
+            guard let myItem = self.categoryName?[indexPath.row] else {return}
+            let deleteAlert = UIAlertController(title: "Delete Recored", message: "Are you Want to Delete Record", preferredStyle: .alert)
+            let deleteYes = UIAlertAction(title: "Yes", style: .destructive) { _ in
+                do{
+                    try self.realm.write{
+                        self.realm.delete(myItem.items)
+                        self.realm.delete(myItem)
+                    }
+                }catch{
+                    print("Error Deleting Data\(error)")
+                }
+               
+                
+                self.tableView.reloadData()
+                
+            }
+            let deleteNo = UIAlertAction(title: "No", style: .default)
+            deleteAlert.addAction(deleteNo)
+            deleteAlert.addAction(deleteYes)
+            self.present(deleteAlert, animated: true)
+            print("Delete")
+            
+      
+            // handle action by updating model with deletion
+            self.tableView.reloadData()
+        }
+        deleteAction.image = UIImage(systemName: "trash")
+        // customize the action appearance
+        
+        return [deleteAction]
+        
     }
 }

@@ -7,6 +7,7 @@
 
 import UIKit
 import RealmSwift
+import SwipeCellKit
 
 class TodoListViewController: UITableViewController {
     
@@ -16,6 +17,7 @@ class TodoListViewController: UITableViewController {
     var selectedCatagory: Category?{
         didSet{
             loadItems()
+            tableView.rowHeight = 50
         }
     }
     
@@ -43,7 +45,7 @@ class TodoListViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
 //        let cell = UITableViewCell(style: .default, reuseIdentifier: "TodoItemCell")
-        let cell = tableView.dequeueReusableCell(withIdentifier: "TodoItemCell", for: indexPath)
+        let cell = tableView.dequeueReusableCell(withIdentifier: "TodoItemCell", for: indexPath) as! SwipeTableViewCell
         
         if let item = listItems?[indexPath.row]{
             cell.textLabel?.text = item.title
@@ -55,7 +57,7 @@ class TodoListViewController: UITableViewController {
             cell.textLabel?.text  = "No Items Added"
         }
        
-        
+        cell.delegate = self
        
         return cell
     }
@@ -97,22 +99,8 @@ class TodoListViewController: UITableViewController {
             updateAlert.addAction(updateAction)
             self.present(updateAlert, animated: true)
         }
-    //MARK: - Items That Check Uncheck the item in the DataBase
-        (myitem.done) ? (checkTitle = "Uncheck") : (checkTitle = "Check")
-        
-        let checkAction = UIAlertAction(title: checkTitle, style: .default) { action in
-            do{
-                try self.realm.write{
-                    myitem.done = !myitem.done
-            }
-            
-            }catch{
-                print("Error Updating Data \(error)")
-            }
-           
-          
-            self.tableView.reloadData()
-        }
+
+       
     //MARK: - Items That Remove the item in the DataBase
         let removeAction = UIAlertAction(title: "Remove Item", style: .destructive) { _ in
             let removeAlert = UIAlertController(title: "Remove Item", message: "Are you Want to Remove Data", preferredStyle: .alert)
@@ -133,7 +121,6 @@ class TodoListViewController: UITableViewController {
             self.present(removeAlert, animated: true)
         }
         updateList.addAction(doneAction)
-        updateList.addAction(checkAction)
         updateList.addAction(removeAction)
       present(updateList, animated: true)
         
@@ -240,4 +227,40 @@ extension TodoListViewController: UISearchBarDelegate{
            
         }
     }
+}
+
+//MARK: - SwipeCellkit Configration
+
+extension TodoListViewController: SwipeTableViewCellDelegate{
+    func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath, for orientation: SwipeCellKit.SwipeActionsOrientation) -> [SwipeCellKit.SwipeAction]? {
+        guard let myitem = self.listItems?[indexPath.row]else {return nil}
+        guard orientation == .right else {return nil}
+        
+//MARK: - Items That Check Uncheck the item in the DataBase
+            
+        let checkAction = SwipeAction(style: .default, title: .none) { checkAction, indexpath in
+            
+            do{
+                try self.realm.write{
+                    myitem.done = !myitem.done
+            }
+            
+            }catch{
+                print("Error Updating Data \(error)")
+            }
+           
+          
+            self.tableView.reloadData()
+            
+        }
+        
+        (myitem.done) ? (checkAction.image = UIImage(systemName: "xmark")) : (checkAction.image = UIImage(systemName: "checkmark"))
+        
+        (myitem.done) ? (checkAction.style = .destructive) : (checkAction.style = .default)
+        
+        return [checkAction]
+            
+    }
+    
+    
 }

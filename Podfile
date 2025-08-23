@@ -5,6 +5,7 @@ target 'Todo List' do
   use_frameworks!
   
   pod 'RealmSwift'
+  pod 'SwipeCellKit'
 
   # Pods for Todo List
 
